@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&family=DM+Serif+Display&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1F4E79;
+    --navy-light: #2E75B6;
+    --navy-pale: #EBF3FB;
+    --teal: #0F6E56;
+    --teal-light: #1D9E75;
+    --teal-pale: #E1F5EE;
+    --amber: #BA7517;
+    --amber-pale: #FAEEDA;
+    --coral: #993C1D;
+    --coral-pale: #FAECE7;
+    --gray-50: #F8F7F4;
+    --gray-100: #EEECEA;
+    --gray-200: #D4D2CB;
+    --gray-500: #888780;
+    --gray-700: #444441;
+    --gray-900: #1C1C1A;
+    --white: #FFFFFF;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    padding: 0 2.5rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 18px; height: 18px; fill: white; }
+  .logo-text { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  .logo-sub { font-size: 11px; opacity: 0.6; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-badge {
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 2rem 4rem;
+  }
+
+  /* ── UPLOAD ZONE ── */
+  #upload-section {
+    margin-bottom: 2.5rem;
+  }
+  .upload-zone {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--navy-light);
+    background: var(--navy-pale);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon {
+    width: 52px; height: 52px;
+    background: var(--navy-pale);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+  }
+  .upload-icon svg { width: 24px; height: 24px; stroke: var(--navy-light); fill: none; }
+  .upload-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; color: var(--gray-900); }
+  .upload-sub { font-size: 13px; color: var(--gray-500); }
+  .upload-formats {
+    display: flex; gap: 8px; justify-content: center; margin-top: 14px;
+  }
+  .fmt-badge {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--gray-100); color: var(--gray-700);
+  }
+  .file-info {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--teal-pale);
+    border: 1px solid #9FE1CB;
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-top: 1rem;
+  }
+  .file-info svg { width: 18px; height: 18px; stroke: var(--teal); fill: none; flex-shrink: 0; }
+  .file-info-name { font-size: 14px; font-weight: 500; color: var(--teal); }
+  .file-info-size { font-size: 12px; color: var(--teal-light); margin-left: auto; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 10px 22px; border-radius: var(--radius);
+    border: none; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-primary:disabled { background: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
+  .btn-secondary { background: var(--white); color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn-secondary:hover { background: var(--gray-50); }
+  .btn-green { background: var(--teal); color: white; }
+  .btn-green:hover { background: var(--teal-light); }
+  .btn-row { display: flex; gap: 10px; margin-top: 1.25rem; flex-wrap: wrap; }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    background: var(--gray-100); border-radius: 4px; height: 6px; overflow: hidden; margin: 8px 0;
+  }
+  .progress-bar {
+    height: 100%; background: var(--navy-light);
+    border-radius: 4px; transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-label { font-size: 13px; color: var(--gray-500); }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; }
+  #dashboard.visible { display: block; }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; font-weight: 400;
+    color: var(--gray-900); margin-bottom: 1.25rem;
+    letter-spacing: -0.02em;
+  }
+  .section-sub { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+  /* ── METRIC CARDS ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .metric-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem 1rem;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .metric-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .metric-card.navy::before { background: var(--navy); }
+  .metric-card.teal::before { background: var(--teal-light); }
+  .metric-card.amber::before { background: var(--amber); }
+  .metric-card.coral::before { background: var(--coral); }
+  .metric-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gray-500); margin-bottom: 6px; }
+  .metric-value { font-size: 26px; font-weight: 600; color: var(--gray-900); line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--gray-500); margin-top: 5px; }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 2rem;
+  }
+  .chart-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .chart-title { font-size: 13px; font-weight: 500; color: var(--gray-700); margin-bottom: 1rem; letter-spacing: -0.01em; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ── TABLE ── */
+  .table-section { margin-bottom: 2rem; }
+  .table-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .table-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .table-title { font-size: 13px; font-weight: 500; color: var(--gray-700); }
+  .table-count { font-size: 12px; color: var(--gray-500); }
+  .table-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--gray-500); padding: 10px 14px; text-align: left;
+    background: var(--gray-50);
+    position: sticky; top: 0; z-index: 1;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  tbody td { font-size: 13px; padding: 10px 14px; border-bottom: 1px solid var(--gray-100); color: var(--gray-900); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--gray-50); }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 9px;
+    border-radius: 20px; letter-spacing: 0.02em;
+  }
+  .badge-active { background: var(--teal-pale); color: var(--teal); }
+  .badge-resigned { background: var(--coral-pale); color: var(--coral); }
+  .badge-notice { background: var(--amber-pale); color: var(--amber); }
+  .badge-male { background: var(--navy-pale); color: var(--navy); }
+  .badge-female { background: #FBEAF0; color: #993556; }
+
+  /* ── ATTRITION BANNER ── */
+  .insight-row { display: flex; gap: 12px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .insight-card {
+    flex: 1; min-width: 220px;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    border: 1px solid transparent;
+  }
+  .insight-card.warn { background: var(--amber-pale); border-color: #FAC775; }
+  .insight-card.info { background: var(--navy-pale); border-color: #B5D4F4; }
+  .insight-card.good { background: var(--teal-pale); border-color: #9FE1CB; }
+  .insight-label { font-size: 11px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .insight-card.warn .insight-label { color: var(--amber); }
+  .insight-card.info .insight-label { color: var(--navy); }
+  .insight-card.good .insight-label { color: var(--teal); }
+  .insight-value { font-size: 22px; font-weight: 600; margin-bottom: 2px; }
+  .insight-card.warn .insight-value { color: var(--coral); }
+  .insight-card.info .insight-value { color: var(--navy); }
+  .insight-card.good .insight-value { color: var(--teal); }
+  .insight-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+
+  /* ── EXPORT AREA ── */
+  .export-area {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+  }
+  .export-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .export-sub { font-size: 13px; color: var(--gray-500); margin-bottom: 1rem; }
+  .export-options { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ── EMPTY ── */
+  .empty-state { text-align: center; padding: 3rem; color: var(--gray-500); }
+
+  /* ── SPINNER ── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; margin-bottom: 1.5rem; background: var(--gray-100); border-radius: 10px; padding: 3px; width: fit-content; }
+  .tab {
+    font-size: 13px; font-weight: 500; padding: 7px 18px;
+    border-radius: 8px; border: none; background: none; cursor: pointer; color: var(--gray-500);
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active { background: var(--white); color: var(--gray-900); box-shadow: var(--shadow-sm); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    main { padding: 1.25rem 1rem 3rem; }
+    header { padding: 0 1.25rem; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">HR Analytics</div>
+      <div class="logo-sub">Dashboard</div>
+    </div>
+  </div>
+  <div class="header-badge">Upload · Analyze · Export</div>
+</header>
+
+<main>
+
+  <!-- UPLOAD -->
+  <section id="upload-section">
+    <div class="section-title" style="margin-bottom:0.5rem">Upload your HR data file</div>
+    <p class="section-sub" style="margin-bottom:1.25rem">Supports Excel and CSV files with standard HR columns</p>
+
+    <div class="upload-zone" id="upload-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+      </div>
+      <div class="upload-title">Drop your spreadsheet here</div>
+      <div class="upload-sub">or click to browse files from your computer</div>
+      <div class="upload-formats">
+        <span class="fmt-badge">.xlsx</span>
+        <span class="fmt-badge">.xls</span>
+        <span class="fmt-badge">.csv</span>
+      </div>
+    </div>
+
+    <div id="file-info" style="display:none"></div>
+
+    <div id="progress-area" style="display:none; margin-top:1rem;">
+      <div class="progress-label" id="progress-label">Parsing file…</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    </div>
+
+    <div class="btn-row" id="action-btns" style="display:none">
+      <button class="btn btn-primary" id="analyze-btn" onclick="runAnalysis()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analyze Data
+      </button>
+      <button class="btn btn-secondary" onclick="resetUpload()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg>
+        Reset
+      </button>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem;">
+      <div>
+        <div class="section-title" style="margin-bottom:0">Analysis Results</div>
+        <div class="section-sub" id="file-name-label"></div>
+      </div>
+      <button class="btn btn-secondary" onclick="resetUpload()" style="font-size:13px; padding:8px 16px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg>
+        Upload new file
+      </button>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('overview')">Overview</button>
+      <button class="tab" onclick="showTab('workforce')">Workforce</button>
+      <button class="tab" onclick="showTab('attrition')">Attrition</button>
+      <button class="tab" onclick="showTab('data')">Raw Data</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="metrics-grid" id="metrics-grid"></div>
+      <div class="insight-row" id="insight-row"></div>
+      <div class="charts-grid" id="charts-overview"></div>
+    </div>
+
+    <!-- WORKFORCE TAB -->
+    <div class="tab-pane" id="tab-workforce">
+      <div class="charts-grid" id="charts-workforce"></div>
+    </div>
+
+    <!-- ATTRITION TAB -->
+    <div class="tab-pane" id="tab-attrition">
+      <div class="charts-grid" id="charts-attrition"></div>
+    </div>
+
+    <!-- RAW DATA TAB -->
+    <div class="tab-pane" id="tab-data">
+      <div class="table-section">
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Employee Records</span>
+            <span class="table-count" id="row-count"></span>
+          </div>
+          <div class="table-wrap">
+            <table id="data-table"><thead><tr></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="export-area">
+      <div class="export-title">Export Analysis Report</div>
+      <div class="export-sub">Download a full analysis as a formatted Excel workbook with charts summary, or export raw data as CSV.</div>
+      <div class="export-options">
+        <button class="btn btn-green" onclick="exportExcel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Excel Report
+        </button>
+        <button class="btn btn-secondary" onclick="exportCSV()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /dashboard -->
+
+</main>
+
+<script>
+let parsedData = [];
+let fileName = '';
+let chartInstances = {};
+
+// ── UPLOAD ──
+function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+function handleDragLeave() { document.getElementById('upload-zone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  fileName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const size = (file.size / 1024).toFixed(1) + ' KB';
+
+  const fi = document.getElementById('file-info');
+  fi.innerHTML = `<div class="file-info"><svg viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="file-info-name">${file.name}</span><span class="file-info-size">${size}</span></div>`;
+  fi.style.display = 'block';
+  document.getElementById('action-btns').style.display = 'flex';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      if (ext === 'csv') {
+        const wb = XLSX.read(e.target.result, { type: 'string' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        parsedData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      } else {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        parsedData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      }
+    } catch(err) { alert('Could not parse file: ' + err.message); }
+  };
+  if (ext === 'csv') reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+function resetUpload() {
+  parsedData = [];
+  fileName = '';
+  document.getElementById('file-info').style.display = 'none';
+  document.getElementById('action-btns').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('upload-section').style.display = 'block';
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+}
+
+// ── ANALYSIS ──
+function runAnalysis() {
+  if (!parsedData.length) { alert('Please upload a file first.'); return; }
+
+  const prog = document.getElementById('progress-area');
+  const bar = document.getElementById('progress-bar');
+  const label = document.getElementById('progress-label');
+  prog.style.display = 'block';
+
+  const steps = ['Reading columns…', 'Computing metrics…', 'Building charts…', 'Generating insights…', 'Done!'];
+  let step = 0;
+  const interval = setInterval(() => {
+    bar.style.width = ((step + 1) / steps.length * 100) + '%';
+    label.textContent = steps[step];
+    step++;
+    if (step >= steps.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        prog.style.display = 'none';
+        renderDashboard();
+      }, 300);
+    }
+  }, 280);
+}
+
+// ── COLUMN DETECTION ──
+function detect(candidates) {
+  const cols = Object.keys(parsedData[0] || {});
+  for (const c of candidates) {
+    const found = cols.find(col => col.toLowerCase().includes(c.toLowerCase()));
+    if (found) return found;
+  }
+  return null;
+}
+
+function getCol(row, candidates) {
+  const k = detect(candidates);
+  return k ? String(row[k] || '').trim() : '';
+}
+
+function getNum(row, candidates) {
+  const k = detect(candidates);
+  return k ? parseFloat(row[k]) || 0 : 0;
+}
+
+// ── RENDER ──
+function renderDashboard() {
+  const data = parsedData;
+  const total = data.length;
+
+  const statusCol = detect(['Employee Status', 'Status', 'EmployeeStatus']);
+  const resignedCol = detect(['Resigned', 'On Notice', 'ResignedOnNotice']);
+  const genderCol = detect(['Gender', 'Sex']);
+  const buCol = detect(['Business Unit', 'BU', 'Department', 'BusinessUnit']);
+  const gradeCol = detect(['Grade Group', 'GradeGroup', 'Grade']);
+  const ageCol = detect(['Age']);
+  const tenureCol = detect(['Tenure Months', 'TenureMonths', 'Tenure']);
+  const onrollCol = detect(['OnRoll', 'On Roll', 'Employment Type']);
+  const exitCol = detect(['Exit Reason', 'ExitReason', 'Reason']);
+  const ratingCol = detect(['Rating', 'Performance']);
+  const zoneCol = detect(['Zone', 'Region']);
+  const designationCol = detect(['Designation', 'Job Title', 'Title']);
+
+  // Count helpers
+  function countBy(col) {
+    const map = {};
+    data.forEach(r => {
+      const v = col ? String(r[col] || 'Unknown').trim() : 'Unknown';
+      if (v) map[v] = (map[v] || 0) + 1;
+    });
+    return map;
+  }
+  function avg(col) {
+    if (!col) return 0;
+    const vals = data.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }
+
+  const statusCounts = countBy(statusCol);
+  const active = statusCounts['Active'] || 0;
+  const resigned = (statusCounts['Resigned'] || 0) + (statusCounts['On Notice'] || 0);
+  const attritionRate = total ? ((resigned / total) * 100).toFixed(1) : 0;
+  const genderCounts = countBy(genderCol);
+  const buCounts = countBy(buCol);
+  const gradeCounts = countBy(gradeCol);
+  const exitCounts = countBy(exitCol);
+  const ratingCounts = countBy(ratingCol);
+  const zoneCounts = countBy(zoneCol);
+  const avgAge = avg(ageCol).toFixed(1);
+  const avgTenure = (avg(tenureCol) / 12).toFixed(1);
+  const onrollCounts = countBy(onrollCol);
+
+  // ── FILE LABEL ──
+  document.getElementById('file-name-label').textContent = `${fileName} · ${total.toLocaleString()} employee records`;
+
+  // ── METRICS ──
+  const metricsHtml = [
+    { label: 'Total Employees', value: total, sub: 'in this dataset', cls: 'navy' },
+    { label: 'Active', value: active, sub: ((active/total*100).toFixed(0)) + '% of workforce', cls: 'teal' },
+    { label: 'Attrition Rate', value: attritionRate + '%', sub: `${resigned} resigned / on notice`, cls: 'coral' },
+    { label: 'Avg Age', value: avgAge + ' yrs', sub: 'across all employees', cls: 'amber' },
+    { label: 'Avg Tenure', value: avgTenure + ' yrs', sub: 'average employment', cls: 'navy' },
+    { label: 'Gender Ratio', value: `${genderCounts['Male']||0}M / ${genderCounts['Female']||0}F`, sub: 'male / female split', cls: 'teal' },
+  ].map(m => `<div class="metric-card ${m.cls}"><div class="metric-label">${m.label}</div><div class="metric-value">${m.value}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+  document.getElementById('metrics-grid').innerHTML = metricsHtml;
+
+  // ── INSIGHTS ──
+  const attrNum = parseFloat(attritionRate);
+  const attrClass = attrNum > 50 ? 'warn' : attrNum > 20 ? 'warn' : 'good';
+  const attrMsg = attrNum > 50 ? 'High attrition — review exit interview data' : attrNum > 20 ? 'Above average — monitor closely' : 'Healthy retention rate';
+  const topBU = Object.entries(buCounts).sort((a,b)=>b[1]-a[1])[0];
+  const topExit = Object.entries(exitCounts).filter(e=>e[0]).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('insight-row').innerHTML = `
+    <div class="insight-card ${attrClass}"><div class="insight-label">Attrition Alert</div><div class="insight-value">${attritionRate}%</div><div class="insight-desc">${attrMsg}</div></div>
+    <div class="insight-card info"><div class="insight-label">Largest BU</div><div class="insight-value">${topBU ? topBU[0] : '—'}</div><div class="insight-desc">${topBU ? topBU[1] + ' employees' : 'No BU data detected'}</div></div>
+    <div class="insight-card ${attrNum > 20 ? 'warn' : 'good'}"><div class="insight-label">Top Exit Reason</div><div class="insight-value">${topExit ? topExit[1] : '—'}</div><div class="insight-desc">${topExit ? topExit[0] : 'No exit data detected'}</div></div>
+  `;
+
+  // ── CHARTS OVERVIEW ──
+  document.getElementById('charts-overview').innerHTML = `
+    <div class="chart-card"><div class="chart-title">Employee status breakdown</div><div class="chart-wrap"><canvas id="c-status"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Gender distribution</div><div class="chart-wrap"><canvas id="c-gender"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Business unit headcount</div><div class="chart-wrap"><canvas id="c-bu"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Exit reasons</div><div class="chart-wrap"><canvas id="c-exit"></canvas></div></div>
+  `;
+  document.getElementById('charts-workforce').innerHTML = `
+    <div class="chart-card"><div class="chart-title">Grade group distribution</div><div class="chart-wrap"><canvas id="c-grade"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">On-roll vs off-roll</div><div class="chart-wrap"><canvas id="c-onroll"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Zone / region spread</div><div class="chart-wrap"><canvas id="c-zone"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Performance ratings</div><div class="chart-wrap"><canvas id="c-rating"></canvas></div></div>
+  `;
+  document.getElementById('charts-attrition').innerHTML = `
+    <div class="chart-card"><div class="chart-title">Active vs resigned / on notice</div><div class="chart-wrap"><canvas id="c-attr"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Exit reasons breakdown</div><div class="chart-wrap"><canvas id="c-exit2"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Business unit attrition</div><div class="chart-wrap"><canvas id="c-buattr"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Termination type</div><div class="chart-wrap"><canvas id="c-termtype"></canvas></div></div>
+  `;
+
+  const palette = ['#1F4E79','#2E75B6','#1D9E75','#EF9F27','#D85A30','#D4537E','#7F77DD','#639922','#888780'];
+
+  function makeChart(id, type, labels, values, color) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (chartInstances[id]) chartInstances[id].destroy();
+    const colors = Array.isArray(color) ? color : labels.map((_, i) => palette[i % palette.length]);
+    chartInstances[id] = new Chart(el, {
+      type,
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: colors, borderColor: type === 'line' ? colors[0] : colors, borderWidth: type === 'bar' ? 0 : 2, borderRadius: type === 'bar' ? 5 : 0, fill: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: type !== 'bar', position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 }, padding: 12, boxWidth: 12 } }, tooltip: { bodyFont: { family: 'DM Sans' } } },
+        scales: type === 'bar' ? { x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 11 } } }, y: { grid: { color: '#EEECEA' }, ticks: { font: { family: 'DM Sans', size: 11 } } } } : {}
+      }
+    });
+  }
+
+  setTimeout(() => {
+    const sortedBU = Object.entries(buCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const sortedExit = Object.entries(exitCounts).filter(e=>e[0]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const sortedGrade = Object.entries(gradeCounts).sort((a,b)=>b[1]-a[1]);
+
+    makeChart('c-status', 'doughnut', Object.keys(statusCounts), Object.values(statusCounts));
+    makeChart('c-gender', 'doughnut', Object.keys(genderCounts), Object.values(genderCounts), ['#1F4E79','#D4537E','#888780']);
+    makeChart('c-bu', 'bar', sortedBU.map(e=>e[0]), sortedBU.map(e=>e[1]));
+    makeChart('c-exit', 'doughnut', sortedExit.map(e=>e[0]), sortedExit.map(e=>e[1]));
+    makeChart('c-grade', 'bar', sortedGrade.map(e=>e[0]), sortedGrade.map(e=>e[1]));
+    makeChart('c-onroll', 'doughnut', Object.keys(onrollCounts), Object.values(onrollCounts), ['#1F4E79','#1D9E75']);
+    makeChart('c-zone', 'bar', Object.keys(zoneCounts), Object.values(zoneCounts));
+    makeChart('c-rating', 'bar', Object.keys(ratingCounts), Object.values(ratingCounts));
+    makeChart('c-attr', 'doughnut', ['Active','Resigned / On Notice'], [active, resigned], ['#1D9E75','#D85A30']);
+    makeChart('c-exit2', 'bar', sortedExit.map(e=>e[0]), sortedExit.map(e=>e[1]));
+
+    const buAttrData = Object.entries(buCounts).map(([bu, cnt]) => {
+      const buResigned = data.filter(r => {
+        const b = buCol ? String(r[buCol]||'') : '';
+        const s = statusCol ? String(r[statusCol]||'') : '';
+        return b.includes(bu) && (s.includes('Resign') || s.includes('Notice'));
+      }).length;
+      return { bu, rate: cnt ? ((buResigned / cnt) * 100).toFixed(0) : 0 };
+    }).sort((a,b)=>b.rate-a.rate).slice(0,7);
+    makeChart('c-buattr', 'bar', buAttrData.map(e=>e.bu), buAttrData.map(e=>e.rate));
+
+    const termCol = detect(['Termination Type','TerminationType','Termination']);
+    const termCounts = countBy(termCol);
+    const termFiltered = Object.fromEntries(Object.entries(termCounts).filter(([k])=>k));
+    makeChart('c-termtype', 'doughnut', Object.keys(termFiltered), Object.values(termFiltered));
+  }, 100);
+
+  // ── DATA TABLE ──
+  const cols = Object.keys(data[0] || {}).slice(0, 14);
+  const thead = document.querySelector('#data-table thead tr');
+  thead.innerHTML = cols.map(c => `<th>${c}</th>`).join('');
+  const tbody = document.querySelector('#data-table tbody');
+  tbody.innerHTML = data.slice(0, 200).map(row => `<tr>${cols.map(c => {
+    let v = String(row[c] || '');
+    if (c === 'Employee Status' || c === 'Status') {
+      const cls = v === 'Active' ? 'badge-active' : v === 'Resigned' ? 'badge-resigned' : 'badge-notice';
+      return `<td><span class="badge ${cls}">${v}</span></td>`;
+    }
+    if (c === 'Gender') {
+      return `<td><span class="badge ${v==='Male'?'badge-male':'badge-female'}">${v}</span></td>`;
+    }
+    return `<td>${v.length > 28 ? v.slice(0,28)+'…' : v}</td>`;
+  }).join('')}</tr>`).join('');
+  document.getElementById('row-count').textContent = `${Math.min(data.length, 200)} of ${data.length} rows`;
+
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('dashboard').classList.add('visible');
+}
+
+// ── TABS ──
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick').includes(name)) t.classList.add('active');
+  });
+}
+
+// ── EXPORT EXCEL ──
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+  const data = parsedData;
+  const statusCol = detect(['Employee Status', 'Status']);
+  const genderCol = detect(['Gender', 'Sex']);
+  const buCol = detect(['Business Unit', 'BU', 'Department', 'BusinessUnit']);
+  const gradeCol = detect(['Grade Group', 'GradeGroup', 'Grade']);
+  const ageCol = detect(['Age']);
+  const tenureCol = detect(['Tenure Months', 'TenureMonths', 'Tenure']);
+  const onrollCol = detect(['OnRoll', 'On Roll']);
+  const exitCol = detect(['Exit Reason', 'ExitReason']);
+  const ratingCol = detect(['Rating', 'Performance']);
+  const zoneCol = detect(['Zone', 'Region']);
+
+  function countBy(col) {
+    const map = {};
+    data.forEach(r => { const v = col ? String(r[col]||'Unknown').trim() : 'Unknown'; if(v) map[v]=(map[v]||0)+1; });
+    return map;
+  }
+  function avg(col) {
+    if(!col) return 0;
+    const vals = data.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
+    return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+  }
+
+  const total = data.length;
+  const statusCounts = countBy(statusCol);
+  const active = statusCounts['Active']||0;
+  const resigned = (statusCounts['Resigned']||0)+(statusCounts['On Notice']||0);
+
+  // Sheet 1: Summary
+  const summaryRows = [
+    ['HR ANALYTICS REPORT', '', ''],
+    ['Generated:', new Date().toLocaleDateString(), ''],
+    ['File:', fileName, ''],
+    ['', '', ''],
+    ['WORKFORCE OVERVIEW', '', ''],
+    ['Metric', 'Value', 'Notes'],
+    ['Total Employees', total, ''],
+    ['Active Employees', active, ((active/total*100).toFixed(1))+'% of total'],
+    ['Resigned / On Notice', resigned, ((resigned/total*100).toFixed(1))+'% attrition'],
+    ['Attrition Rate', ((resigned/total*100).toFixed(1))+'%', resigned>total*0.3?'High - action needed':'Within acceptable range'],
+    ['Average Age', parseFloat(avg(ageCol).toFixed(1)), 'years'],
+    ['Average Tenure', parseFloat((avg(tenureCol)/12).toFixed(1)), 'years'],
+    ['', '', ''],
+    ['GENDER BREAKDOWN', '', ''],
+    ['Gender', 'Count', '% of Total'],
+    ...Object.entries(countBy(genderCol)).map(([g,c]) => [g, c, ((c/total*100).toFixed(1))+'%']),
+    ['', '', ''],
+    ['EMPLOYEE STATUS', '', ''],
+    ['Status', 'Count', '% of Total'],
+    ...Object.entries(statusCounts).map(([s,c]) => [s, c, ((c/total*100).toFixed(1))+'%']),
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+  wsSummary['!cols'] = [{wch:28},{wch:18},{wch:28}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+  // Sheet 2: BU Breakdown
+  const buCounts = countBy(buCol);
+  const buRows = [
+    ['BUSINESS UNIT BREAKDOWN'],
+    ['Business Unit', 'Headcount', '% of Total'],
+    ...Object.entries(buCounts).sort((a,b)=>b[1]-a[1]).map(([bu,c]) => [bu, c, ((c/total*100).toFixed(1))+'%'])
+  ];
+  const wsBU = XLSX.utils.aoa_to_sheet(buRows);
+  wsBU['!cols'] = [{wch:28},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsBU, 'By Business Unit');
+
+  // Sheet 3: Exit Analysis
+  const exitCounts = countBy(exitCol);
+  const exitRows = [
+    ['EXIT REASON ANALYSIS'],
+    ['Exit Reason', 'Count', '% of Attrition'],
+    ...Object.entries(exitCounts).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).map(([r,c]) => [r, c, resigned ? ((c/resigned*100).toFixed(1))+'%' : '0%'])
+  ];
+  const wsExit = XLSX.utils.aoa_to_sheet(exitRows);
+  wsExit['!cols'] = [{wch:28},{wch:10},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, wsExit, 'Exit Analysis');
+
+  // Sheet 4: Grade & Rating
+  const gradeRows = [
+    ['GRADE GROUP DISTRIBUTION'],
+    ['Grade Group', 'Count', '% of Total'],
+    ...Object.entries(countBy(gradeCol)).sort((a,b)=>b[1]-a[1]).map(([g,c]) => [g, c, ((c/total*100).toFixed(1))+'%']),
+    ['','',''],
+    ['PERFORMANCE RATINGS'],
+    ['Rating', 'Count', '% of Total'],
+    ...Object.entries(countBy(ratingCol)).sort((a,b)=>b[1]-a[1]).map(([r,c]) => [r, c, ((c/total*100).toFixed(1))+'%']),
+  ];
+  const wsGrade = XLSX.utils.aoa_to_sheet(gradeRows);
+  wsGrade['!cols'] = [{wch:28},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsGrade, 'Grade & Ratings');
+
+  // Sheet 5: Raw data
+  const wsData = XLSX.utils.json_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, wsData, 'Raw Data');
+
+  const outName = fileName.replace(/\.(xlsx|xls|csv)$/i,'') + '_Analysis.xlsx';
+  XLSX.writeFile(wb, outName);
+}
+
+function exportCSV() {
+  const ws = XLSX.utils.json_to_sheet(parsedData);
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName.replace(/\.(xlsx|xls|csv)$/i,'') + '_export.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
